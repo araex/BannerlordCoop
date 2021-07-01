@@ -29,6 +29,8 @@ namespace Coop.Mod.Persistence.RemoteAction
         public static readonly int MaximumQueueSize = 8192;
 #endif
 
+        public bool m_WasFull = false;
+
         private readonly OrderedHashSet<ObjectId> m_DistributedObjects =
             new OrderedHashSet<ObjectId>();
 
@@ -37,6 +39,8 @@ namespace Coop.Mod.Persistence.RemoteAction
         [NotNull] private readonly SharedRemoteStore m_Store;
 
         private readonly TimeSpan m_Timeout;
+
+        private IEnvironmentServer m_EnvironmentServer => CoopServer.Instance.Environment;
 
         /// <summary>
         /// </summary>
@@ -92,6 +96,11 @@ namespace Coop.Mod.Persistence.RemoteAction
                 }
 
                 m_Queue.RemoveRange(0, numberOfBroadcastEvents);
+                if(m_WasFull && m_Queue.Count == 0)
+                {
+                    m_WasFull = false;
+                    m_EnvironmentServer.UnlockTimeControl();
+                }
             }
         }
         public int Priority { get; } = UpdatePriority.ServerThread.ProcessBroadcasts;
@@ -130,6 +139,12 @@ namespace Coop.Mod.Persistence.RemoteAction
                 }
 
                 m_Queue.Add(call);
+                if (m_Queue.Count >= MaximumQueueSize)
+                {
+                    Logger.Debug("Event queue full, the game is paused to catch up.");
+                    m_WasFull = true;
+                    m_EnvironmentServer.LockTimeControlStopped();
+                }
             }
         }
 

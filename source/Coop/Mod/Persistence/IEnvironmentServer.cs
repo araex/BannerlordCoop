@@ -32,10 +32,20 @@ namespace Coop.Mod.Persistence
         /// <returns></returns>
         [CanBeNull]
         MobileParty GetMobilePartyById(MBGUID guid);
-        
+
         /// <summary>
         ///     Gets the synchronization for <see cref="MobileParty"/> instances.
         /// </summary>
         MobilePartySync PartySync { get; }
+
+        /// <summary>
+        ///     Stops time and locks time control.
+        /// </summary>
+        void LockTimeControlStopped();
+
+        /// <summary>
+        ///     Unlocks time control.
+        /// </summary>
+        void UnlockTimeControl();
     }
 }
